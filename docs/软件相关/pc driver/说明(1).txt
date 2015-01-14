@@ -1,0 +1,11 @@
+1.在arduino的官方网站 http://arduino.cc/en/Main/Software
+  下载个IDE Arduino Software
+   版本Arduino IDE
+   Arduino 1.0.6
+
+2.解压 Arduino 1.0.6 里有驱动，安装时候选择对应路径
+
+3.打开Arduino 1.0.6 将 I2Cdev ，MPU6050文件夹复制到
+  arduino-1.0.6\libraries 目录下
+
+4.重新打开Arduino 1.0.6，选择File-->Examples-->MPU6050
