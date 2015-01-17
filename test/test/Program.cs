@@ -16,74 +16,37 @@ namespace ConsoleApplication1
 {
     class Program
     {
-        static SerialPort ComPort;
-
-        public static void OnSerialDataReceived(object sender, SerialDataReceivedEventArgs args)
-        {
-            string data = ComPort.ReadExisting();
-            //ComPort.DiscardInBuffer();
-            //Console.Write(data.Replace("\r", "\n"));
-            Console.Write(data);
-        }
-
         static void Main(string[] args)
         {
-            string port = "COM9";
-            int baud = 600;
-            if (args.Length >= 1)
-            {
-                port = args[0];
-            }
-            if (args.Length >= 2)
-            {
-                baud = int.Parse(args[1]);
-            }
+            String _file = "../../../testResource/5_100/index.txt";
+            FileStream F = new FileStream(_file, FileMode.Open, FileAccess.Read, FileShare.Read);
+            F.Position = 0;
 
-            InitializeComPort(port, baud);
-
-            string text;
-            do
-            {
-                String[] mystring = System.IO.Ports.SerialPort.GetPortNames();
-
-                text = Console.ReadLine();
-                text = ComPort.ReadExisting();
-                Console.Write(text);
-                int STX = 0x2;
-                int ETX = 0x3;
-                ComPort.Write(Char.ConvertFromUtf32(STX) + text + Char.ConvertFromUtf32(ETX));
-            } while (text.ToLower() != "q");
-        }
-
-        private static void InitializeComPort(string port, int baud)
-        {
-            ComPort = new SerialPort(port, baud);
-            ComPort.PortName = port;
-            ComPort.BaudRate = baud;
-            ComPort.Parity = Parity.None;
-            ComPort.StopBits = StopBits.One;
-            ComPort.DataBits = 8;
-            ComPort.ReceivedBytesThreshold = 9;
-            ComPort.RtsEnable = true;
-            ComPort.DtrEnable = true;
-            ComPort.Handshake = System.IO.Ports.Handshake.XOnXOff;
-            ComPort.DataReceived += OnSerialDataReceived;
-            OpenPort(ComPort);
-        }
-
-        public static void OpenPort(SerialPort ComPort)
-        {
             try
             {
-                if (!ComPort.IsOpen)
+                // 创建一个 StreamReader 的实例来读取文件 
+                // using 语句也能关闭 StreamReader
+                using (StreamReader sr = new StreamReader(_file))
                 {
-                    ComPort.Open();
+                    string line;
+                   
+                    // 从文件读取并显示行，直到文件的末尾 
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        //output line of data
+                        Console.WriteLine(line);
+                    }
                 }
             }
             catch (Exception e)
             {
-                throw e;
+                // 向用户显示出错消息
+                Console.WriteLine("The file could not be read:");
+                Console.WriteLine(e.Message);
             }
+            Console.ReadKey();
+
+            return ;
         }
     }
 }

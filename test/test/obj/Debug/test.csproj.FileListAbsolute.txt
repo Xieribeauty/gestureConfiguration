@@ -4,3 +4,9 @@ E:\workspace\c_sharp\test\test\bin\Debug\test.pdb
 E:\workspace\c_sharp\test\test\obj\Debug\test.csprojResolveAssemblyReference.cache
 E:\workspace\c_sharp\test\test\obj\Debug\test.exe
 E:\workspace\c_sharp\test\test\obj\Debug\test.pdb
+E:\workspace\gestureConfiguration\test\test\bin\Debug\test.exe.config
+E:\workspace\gestureConfiguration\test\test\obj\Debug\test.exe
+E:\workspace\gestureConfiguration\test\test\obj\Debug\test.pdb
+E:\workspace\gestureConfiguration\test\test\bin\Debug\test.exe
+E:\workspace\gestureConfiguration\test\test\bin\Debug\test.pdb
+E:\workspace\gestureConfiguration\test\test\obj\Debug\test.csprojResolveAssemblyReference.cache
