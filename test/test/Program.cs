@@ -1,6 +1,5 @@
 ﻿//#define MOTION 0;
-//#define STABLE 1;
-//<< 未确定define使用方法
+//#define STABLE 1;<<
 
 using System;
 using System.ComponentModel;
@@ -24,6 +23,8 @@ namespace ConsoleApplication1
         //temp parameter
         static private int _temp_clickTime = 0;
         static private int _temp_totalGroup = 0;
+        static private String _filePath = "../../../testResource/5_100/index.txt";
+        static private StreamReader _sr = new StreamReader(_filePath);
 
         static private int[] _stableX = new int[50];
         static private int[] _stableY = new int[50];
@@ -38,20 +39,18 @@ namespace ConsoleApplication1
         static private int _threshold = 5300;
 
         static private bool[] _clickIndex = {true, false};
-        static private int _clickValueTime = 0;
-        static private int _clickRecognizeGroup = 85;
-        static private int _clickGroup = 167;
-
-        static private int _dClickRecognizeGroup = 170;
-        static private int _dClickGroup = 252;
+        static private bool _isClick;
+        static private int _clickValueTime = 0; // temp
+        static private int _clickRecognizeGroup = 83;
+        static private int _clickRest = 0;
+        static private int _clickPartitionNow = 0;
 
         static private int _status = 0;
-        static private int _groupNum = 0;
 
-        static private void setStableArray(StreamReader sr, int n) {
+        static private void setStableArray(int n) {
             String line;
             //创建稳定数组
-            for (int i = 0; i < n && (line = sr.ReadLine()) != null; i++){
+            for (int i = 0; i < n && (line = _sr.ReadLine()) != null; i++){
                 char[] splitChar = {'\t'};
                 String[] s = line.Split(splitChar);
                 int[] data = new int[3];
@@ -86,97 +85,122 @@ namespace ConsoleApplication1
             return;
         }
 
-        //main function
-        static void Main(String[] args)
-        {
-            String filePath = "../../../testResource/5_100/index.txt";
+        //因正常或异常结束而重置click参数
+        static private bool resetClick(bool isInTime) {
+            if (isInTime) {
+                _clickPartitionNow = 0;
+                _clickValueTime = 0;
+            }
+            else {
+                _clickPartitionNow = 0;
+                _clickValueTime = 0;
+                _isClick = false;
+                _status--;
+            }
+            
+            return false;
+        }
 
-            // 创建一个 StreamReader 的实例来读取文件 
-            // using 语句也能关闭 StreamReader
-            using (StreamReader sr = new StreamReader(filePath))
-            {
-                String line;
+        static private bool goOnClick(int[] data) {
+             
+            _clickPartitionNow++;
 
-                setStableArray(sr, 50);
-
-                _temp_totalGroup = 50;
-
-
-                // 继续读取直到文件的末尾 
-                while ((line = sr.ReadLine()) != null)
-                {
-                    char[] splitChar = {'\t'};
-                    String[] s = line.Split(splitChar);
-                    int[] data = new int[3];
-
-                    data[0] = Convert.ToInt32(s[0])-_stableAxis[0];
-                    data[1] = Convert.ToInt32(s[1])-_stableAxis[1];
-                    data[2] = Convert.ToInt32(s[2])-_stableAxis[2];
-
-                    _temp_totalGroup++;
-
-                    if (_status == 0) {
-                        if (data[2]>-_threshold && data[2]<_threshold) {
-                            //是平衡状态
-                            _stableAxis[2] = _stableAxis[2] + (
-                                Convert.ToInt32(s[2]) - _stableZ[_stableCursorZ]
-                                )/50;
-                            _stableZ[_stableCursorZ] = Convert.ToInt32(s[2]);
-                            _stableCursorZ = (_stableCursorZ + 1)%50;
-                        }
-                        else {
-                            //运动状态初始
-                            bool temp0 = data[2] < -_threshold;
-
-                            if (temp0) {
-                                _status = 1;
-                                _clickValueTime++;
-                                _groupNum = 1;
-                                //修改单击和双击的标志为活跃
-                            }
-                            else {
-                                //非单双击动作
-                            }
+            // 未完成识别
+            if (_clickValueTime < _clickIndex.Length) { 
+                // 未完成超时
+                if (_clickPartitionNow > _clickRecognizeGroup) {
+                    if ((_clickPartitionNow - _clickRecognizeGroup) > _clickRest) {
+                        resetClick(false);
+                        setStableArray(30);
+                        return false;
+                    }
+                }
+                // 未完成有效 1
+                if (_clickIndex[_clickValueTime]){
+                    if (data[2] > _threshold) {
+                        _clickValueTime++;
+                        if (_clickValueTime == _clickIndex.Length){
+                            _temp_clickTime++;
+                            Console.WriteLine("click recognized by index data\n-----{0},{1}"
+                                , _temp_clickTime
+                                , _temp_totalGroup
+                            );
                         }
                     }
+                }
+                // 未完成有效 2
+                else {
+                    if (data[2] < -_threshold){
+                        _clickValueTime++;
+                        if (_clickValueTime == _clickIndex.Length){
+                            _temp_clickTime++;
+                            Console.WriteLine("click recognized by index data\n-----{0},{1}"
+                                , _temp_clickTime
+                                , _temp_totalGroup
+                            );
+                        }
+                    }
+                }
+            }
+            // 已经完成识别
+            else { 
+                if (_clickPartitionNow > _clickRecognizeGroup){
+                    resetClick(true);
+                    setStableArray(30);
+                }
+            }
+
+            return true;
+        }
+
+        //main function
+        static void Main(String[] args) {
+
+            String line;
+            setStableArray(50);
+            _temp_totalGroup = 50;
+
+            // 继续读取直到文件的末尾 
+            while ((line = _sr.ReadLine()) != null) {
+                char[] splitChar = {'\t'};
+                String[] s = line.Split(splitChar);
+                int[] data = new int[3];
+
+                data[0] = Convert.ToInt32(s[0])-_stableAxis[0];
+                data[1] = Convert.ToInt32(s[1])-_stableAxis[1];
+                data[2] = Convert.ToInt32(s[2])-_stableAxis[2];
+
+                _temp_totalGroup++;
+
+                if (_status == 0) {
+                    if (data[2]>-_threshold && data[2]<_threshold) {
+                        //是平衡状态
+                        _stableAxis[2] = _stableAxis[2] + (
+                            Convert.ToInt32(s[2]) - _stableZ[_stableCursorZ]
+                            )/50;
+                        _stableZ[_stableCursorZ] = Convert.ToInt32(s[2]);
+                        _stableCursorZ = (_stableCursorZ + 1)%50;
+                    }
                     else {
-                        //运动状态
-                        _groupNum++;
-                        
-                        //暂时缺少判断之前运动状态是否为单击
-                        if (_clickValueTime < _clickIndex.Length) {
-                            if (_clickIndex[_clickValueTime]){
-                                if (data[2] > _threshold) {
-                                    _clickValueTime++;
-                                    if (_clickValueTime == _clickIndex.Length){
-                                        _temp_clickTime++;
-                                        Console.WriteLine("click recognized by index data\n-----{0},{1}"
-                                            , _temp_clickTime
-                                            , _temp_totalGroup
-                                            );
-                                    }
-                                }
-                            }
-                            else {
-                                if (data[2] < -_threshold){
-                                    _clickValueTime++;
-                                    if (_clickValueTime == _clickIndex.Length){
-                                        _temp_clickTime++;
-                                        Console.WriteLine("click recognized by index data\n-----{0},{1}"
-                                            , _temp_clickTime
-                                            , _temp_totalGroup
-                                            );
-                                    }
-                                }
-                            }
+                        //运动状态初始
+                        bool temp0 = data[2] < -_threshold;
+
+                        if (temp0) {
+                            _status ++;
+                            _clickValueTime++;
+                            _clickPartitionNow = 1;
+                            _isClick = true;
                         }
                         else {
-                            if (_groupNum > _clickGroup){
-                                _status = 0;
-                                _clickValueTime = 0;
-                                _groupNum = 0;
-                                setStableArray(sr, 30);
-                            }
+                            //非单双击动作
+                        }
+                    }
+                }
+                else {
+                    //运动状态
+                    if (_isClick) {
+                        if (!goOnClick(data)){
+                            //click 结束
                         }
                     }
                 }
