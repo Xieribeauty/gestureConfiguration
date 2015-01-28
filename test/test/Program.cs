@@ -23,7 +23,8 @@ namespace ConsoleApplication1
         //temp parameter
         static private int _temp_clickTime = 0;
         static private int _temp_totalGroup = 0;
-        static private String _filePath = "../../../testResource/5_100/index.txt";
+        //static private String _filePath = "../../../testResource/5_100/index.txt";
+        static private String _filePath = "../../../testResource/4/index.txt";
         static private StreamReader _sr = new StreamReader(_filePath);
 
         static private int[] _stableX = new int[50];
@@ -81,6 +82,8 @@ namespace ConsoleApplication1
             _stableCursorX = n-1;
             _stableCursorY = n-1;
             _stableCursorZ = n-1;
+
+            _temp_totalGroup += n;
 
             return;
         }
@@ -158,7 +161,6 @@ namespace ConsoleApplication1
 
             String line;
             setStableArray(50);
-            _temp_totalGroup = 50;
 
             // 继续读取直到文件的末尾 
             while ((line = _sr.ReadLine()) != null) {
