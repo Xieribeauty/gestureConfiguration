@@ -39,11 +39,11 @@ namespace ConsoleApplication1
 
         static private int _threshold = 5300;
 
-        static private bool[] _clickIndex = {true, false};
+        static private bool[] _clickIndex = {false, true};
         static private bool _isClick;
         static private int _clickValueTime = 0; // temp
-        static private int _clickRecognizeGroup = 83;
-        static private int _clickRest = 0;
+        static private int _clickRecognizeGroup = 67;
+        static private int _clickRest = 26;
         static private int _clickPartitionNow = 0;
 
         static private int _status = 0;
@@ -68,6 +68,8 @@ namespace ConsoleApplication1
                 _stableAxis[2] += data[2];
             }
 
+            _temp_totalGroup += n;
+
             //默认输入超过50组，赋值稳定数组均值
             _stableAxis[0] = _stableAxis[0]/n;
             _stableAxis[1] = _stableAxis[1]/n;
@@ -83,7 +85,6 @@ namespace ConsoleApplication1
             _stableCursorY = n-1;
             _stableCursorZ = n-1;
 
-            _temp_totalGroup += n;
 
             return;
         }
