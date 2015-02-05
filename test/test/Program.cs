@@ -19,37 +19,97 @@ namespace ConsoleApplication1
     {
         // class of stable queue
             class Stable {
-                public int[] x = new int[50];
-                public int[] y = new int[50];
-                public int[] z = new int[50];
-                public int[] axis = new int[3];
-                public int cursor = 0;
-            };
+                public int[] x;
+                public int[] y;
+                public int[] z;
+                public int[] axis;
+                public int cursor;
 
-        // struct of stable 350 queue
-            struct LongStable {
-                int valueNum;
-                int[] queue;
-                int threshold;
-                void init() {
-                    valueNum = 0;
-                    queue = new int[7];
-                    threshold = 350;
+                public Stable() {
+                    x = new int[50];
+                    y = new int[50];
+                    z = new int[50];
+                    axis = new int[3];
+                    cursor = 0;
                 }
             };
 
-        // others
-            // 运动状态
-            static private int _status = 0;
-            // 阈值
-            static private int _threshold = 5300;
+        // class of stable 350 queue
+            public class LongStable {
+                public int valueNum;
+                public int[] queue;
+                public int cursor;
+                public int threshold;
+                public int average;
+                // temp
+                public int tempInvokeNum = 0;
+
+                public LongStable() {
+                    valueNum = 0;
+                    cursor = 0;
+                    queue = new int[7];
+                    threshold = 350;
+                    average = 0;
+                }
+                public void init() {
+                    valueNum = 0;
+                    cursor = 0;
+                    return;
+                }
+                public void input(int value) {
+
+                    if (valueNum < 7) {
+                        valueNum++;
+                        if (valueNum == 7) {
+                            int tempSum = 0;
+                            for (int i = 0; i < 7; i++) {
+                                tempSum+=queue[i];
+                            }
+                            average = tempSum/7;
+                        }
+                        confirmUpdate(value);
+                    }
+                    else {
+                        int tempSubtraction = value - queue[cursor];
+                        if (tempSubtraction > threshold){
+                            //begin up wheel
+                            tempInvokeNum++;
+                            Console.WriteLine(
+                                "UP! {0}----------{1}"
+                                ,_temp_totalGroup
+                                ,tempInvokeNum
+                            );
+                        }
+                        else if (tempSubtraction < -threshold) {
+                            //begin down wheel
+                            tempInvokeNum++;
+                            Console.WriteLine(
+                                "DOWN! {0}----------{1}"
+                                ,_temp_totalGroup
+                                ,tempInvokeNum
+                            );
+                        }
+                        else {
+                            confirmUpdate(value);
+                        }
+                    }
+                    return;
+                }
+
+                private void confirmUpdate(int value) {
+                    queue[cursor] = value;
+                    cursor++;
+                    if (cursor == 7) {cursor = 0;}
+                    return;
+                }
+            };
 
         // source data array(including thumb index and middle finger)
             static private int[] _thumbData = new int[3];
             static private int[] _indexData = new int[3];
             static private int[] _middleData = new int[3];
 
-        // temp parameter
+        // temp
             static private int _temp_clickTime = 0;
             static private int _temp_totalGroup = 0;
             static private int _temp_motivateTime = 0;
@@ -64,7 +124,7 @@ namespace ConsoleApplication1
 
         // stable 350 loop queue
             static private LongStable _longIndexZ = new LongStable();
-            static private LongStable _longthumbZ = new LongStable();
+            static private LongStable _longThumbZ = new LongStable();
 
         // 单击参数
             static private bool[] _clickIndex = {false, true};
@@ -73,6 +133,13 @@ namespace ConsoleApplication1
             static private int _clickRecognizeGroup = 67;
             static private int _clickRest = 26;
             static private int _clickPartitionNow = 0;
+
+        // others
+            // 运动状态
+            static private int _status = 0;
+            // 阈值
+            static private int _threshold = 5300;
+
 
         static private void setStableArray(int n) {
             String line;
@@ -128,7 +195,7 @@ namespace ConsoleApplication1
         }
 
         static private bool goOnClick(int[] data) {
-             
+            
             _clickPartitionNow++;
 
             // 未完成识别
@@ -189,17 +256,16 @@ namespace ConsoleApplication1
             while ((line = _sr.ReadLine()) != null) {
                 char[] splitChar = {'\t'};
                 String[] s = line.Split(splitChar);
-                int[] data = new int[3];
 
-                data[0] = Convert.ToInt32(s[0])-_stableIndex.axis[0];
-                data[1] = Convert.ToInt32(s[1])-_stableIndex.axis[1];
-                data[2] = Convert.ToInt32(s[2])-_stableIndex.axis[2];
+                _indexData[0] = Convert.ToInt32(s[0])-_stableIndex.axis[0];
+                _indexData[1] = Convert.ToInt32(s[1])-_stableIndex.axis[1];
+                _indexData[2] = Convert.ToInt32(s[2])-_stableIndex.axis[2];
 
                 _temp_totalGroup++;
 
                 if (_status == 0) { // 之前是平衡状态
 
-                    if (data[2]>-_threshold && data[2]<_threshold) { // 是平衡状态
+                    if (_indexData[2]>-_threshold && _indexData[2]<_threshold) { // 是平衡状态
 
                         _stableIndex.axis[2] = _stableIndex.axis[2] + (
                             Convert.ToInt32(s[2]) - _stableIndex.z[_stableIndex.cursor]
@@ -207,12 +273,18 @@ namespace ConsoleApplication1
                         _stableIndex.z[_stableIndex.cursor] = Convert.ToInt32(s[2]);
                         _stableIndex.cursor = (_stableIndex.cursor + 1)%50;
 
+                        if (_stableIndex.cursor == 0) {
+                            _longIndexZ.input(_stableIndex.axis[2]);
+                        }
                     }
                     else { // 运动状态初始
                         
                         _temp_motivateTime++;
-                        Console.WriteLine("this is the beginning of motivation status {0}\n{1}", _temp_totalGroup, _temp_motivateTime);
-                        bool temp0 = data[2] < -_threshold;
+                        //Console.WriteLine("this is the beginning of motivation status {0}\n{1}"
+                        //    , _temp_totalGroup
+                        //    , _temp_motivateTime
+                        //);
+                        bool temp0 = _indexData[2] < -_threshold;
                         if (temp0) {
                             _status ++;
                             _clickValueTime++;
@@ -226,7 +298,7 @@ namespace ConsoleApplication1
                 }
                 else { // 之前是运动状态
                     if (_isClick) {
-                        if (!goOnClick(data)){
+                        if (!goOnClick(_indexData)){
                             // click 结束
                         }
                     }
